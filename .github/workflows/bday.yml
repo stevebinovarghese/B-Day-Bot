@@ -1,0 +1,40 @@
+name: Birthday reminders
+
+on:
+  schedule:
+    # GitHub uses UTC. IST = UTC + 5:30
+    - cron: "25 18 * * *"   # 11:55 PM IST -> "tomorrow is X's birthday"
+    - cron: "30 4 * * *"    # 10:00 AM IST -> "did you wish X?"
+  workflow_dispatch:         # lets you press a "Run" button to test
+    inputs:
+      mode:
+        description: "night or morning (leave empty to decide by time)"
+        required: false
+      date_override:
+        description: "Pretend today is this date, format DD-MM (optional)"
+        required: false
+      dry_run:
+        description: "Type true to test without sending a WhatsApp message"
+        required: false
+
+jobs:
+  remind:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: pip install -r requirements.txt
+
+      - run: python bot.py
+        env:
+          WHATSAPP_TOKEN: ${{ secrets.WHATSAPP_TOKEN }}
+          PHONE_NUMBER_ID: ${{ secrets.PHONE_NUMBER_ID }}
+          MY_NUMBER: ${{ secrets.MY_NUMBER }}
+          SHEET_CSV_URL: ${{ secrets.SHEET_CSV_URL }}
+          MODE: ${{ github.event.inputs.mode }}
+          DATE_OVERRIDE: ${{ github.event.inputs.date_override }}
+          DRY_RUN: ${{ github.event.inputs.dry_run }}
